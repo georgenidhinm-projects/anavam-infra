@@ -1,0 +1,18 @@
+# The bills mailbox worker (Cloudflare Email Routing on in.anavamgroup.ca). Deployed with `npx wrangler deploy` from this folder.
+# The shared secret is never written here: set it with `npx wrangler secret put NUDGE_MAIL_SECRET` (and the same value in Vercel,
+# anavam-nudge, NUDGE_MAIL_SECRET).
+name = "anavam-mail-worker"
+main = "src/worker.mjs"
+compatibility_date = "2026-10-01"
+
+[vars]
+NUDGE_URL = "https://anavam-nudge.vercel.app/api/mail/inbound"
+
+# Messages waiting for a retry (24 hours at most). Create it once with `npx wrangler kv namespace create RETRY` and put the id here.
+[[kv_namespaces]]
+binding = "RETRY"
+id = "REPLACE_WITH_THE_KV_NAMESPACE_ID"
+
+# Retries are checked every minute
+[triggers]
+crons = ["* * * * *"]

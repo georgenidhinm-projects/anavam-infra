@@ -1,0 +1,12 @@
+{
+  "name": "anavam-mail-worker",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Email Worker: hands bills-* mail on in.anavamgroup.ca to Nudge over signed HTTPS (the Nudge bills mailbox spec)",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "postal-mime": "2.4.3"
+  }
+}
