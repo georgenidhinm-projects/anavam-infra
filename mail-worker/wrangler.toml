@@ -1,4 +1,4 @@
-# The bills mailbox worker (Cloudflare Email Routing on in.anavamgroup.ca). Deployed with `npx wrangler deploy` from this folder.
+# The bills mailbox worker (Cloudflare Email Routing on in.anavamgroup.com). Deployed with `npx wrangler deploy` from this folder.
 # The shared secret is never written here: set it with `npx wrangler secret put NUDGE_MAIL_SECRET` (and the same value in Vercel,
 # anavam-nudge, NUDGE_MAIL_SECRET).
 name = "anavam-mail-worker"

@@ -6,21 +6,21 @@ import { LIMITS, isBillsAddress, parseAuth, htmlToText, buildPayload, fitPayload
 import worker, { deliver } from '../src/worker.mjs';
 
 const raw = (extra = '') => [
-  'From: ENMAX <billing@enmax.com>', 'To: bills-k3x9q2m7wa@in.anavamgroup.ca', 'Reply-To: noreply@enmax.com',
+  'From: ENMAX <billing@enmax.com>', 'To: bills-k3x9q2m7wa@in.anavamgroup.com', 'Reply-To: noreply@enmax.com',
   'Subject: Your ENMAX bill is ready', 'Date: Thu, 30 Oct 2026 12:44:10 -0600', 'Message-ID: <abc123@enmax.com>',
   'Authentication-Results: mx.cloudflare.net; spf=pass smtp.mailfrom=outlook.com; dkim=pass header.d=outlook.com; dmarc=pass header.from=enmax.com',
   'MIME-Version: 1.0', 'Content-Type: text/plain; charset=utf-8', '', `Your bill of $84.12 is due November 20.${extra}`, ''].join('\r\n');
 
 const headersOf = (text) => { const map = new Map(); for (const line of text.split('\r\n\r\n')[0].split('\r\n')) { const i = line.indexOf(':'); map.set(line.slice(0, i).toLowerCase(), line.slice(i + 1).trim()); } return { get: (k) => map.get(k.toLowerCase()) ?? null }; };
-const message = (text, over = {}) => ({ to: 'bills-k3x9q2m7wa@in.anavamgroup.ca', from: 'nidhin@example.com', raw: new Blob([text]).stream(), rawSize: text.length, headers: headersOf(text), setReject(r) { this.rejected = r; }, ...over });
+const message = (text, over = {}) => ({ to: 'bills-k3x9q2m7wa@in.anavamgroup.com', from: 'nidhin@example.com', raw: new Blob([text]).stream(), rawSize: text.length, headers: headersOf(text), setReject(r) { this.rejected = r; }, ...over });
 const kv = () => { const m = new Map(); return { m, put: async (k, v) => m.set(k, v), get: async (k, t) => (m.has(k) ? (t === 'json' ? JSON.parse(m.get(k)) : m.get(k)) : null), delete: async (k) => m.delete(k), list: async ({ prefix }) => ({ keys: [...m.keys()].filter((k) => k.startsWith(prefix)).map((name) => ({ name })), list_complete: true }) }; };
 const nudge = (answers) => { const calls = []; return { calls, fetch: async (url, init) => { calls.push({ url, init }); const a = answers.shift() ?? 200; return { status: a, headers: { get: (k) => (k === 'retry-after' && a === 429 ? '120' : null) } }; } }; };
 const env = (store) => ({ NUDGE_URL: 'https://nudge.test/api/mail/inbound', NUDGE_MAIL_SECRET: 's'.repeat(40), RETRY: store });
 
 test('addresses: only bills-<code>@domain', () => {
-  assert.equal(isBillsAddress('bills-k3x9q2m7wa@in.anavamgroup.ca'), true);
-  assert.equal(isBillsAddress('nidhin@in.anavamgroup.ca'), false);
-  assert.equal(isBillsAddress('bills-@in.anavamgroup.ca'), false);
+  assert.equal(isBillsAddress('bills-k3x9q2m7wa@in.anavamgroup.com'), true);
+  assert.equal(isBillsAddress('nidhin@in.anavamgroup.com'), false);
+  assert.equal(isBillsAddress('bills-@in.anavamgroup.com'), false);
 });
 
 test('auth verdicts and HTML to text', () => {
@@ -67,7 +67,7 @@ test('end to end: a real email parsed and posted, signed, with the spec\'s field
   try { await worker.email(message(raw()), env(store)); } finally { globalThis.fetch = realFetch; }
   assert.equal(n.calls.length, 1);
   const { init } = n.calls[0]; const body = JSON.parse(init.body);
-  assert.equal(body.id, '<abc123@enmax.com>'); assert.equal(body.to, 'bills-k3x9q2m7wa@in.anavamgroup.ca'); assert.equal(body.envelopeFrom, 'nidhin@example.com');
+  assert.equal(body.id, '<abc123@enmax.com>'); assert.equal(body.to, 'bills-k3x9q2m7wa@in.anavamgroup.com'); assert.equal(body.envelopeFrom, 'nidhin@example.com');
   assert.deepEqual(body.from, { address: 'billing@enmax.com', name: 'ENMAX' }); assert.equal(body.replyTo, 'noreply@enmax.com');
   assert.equal(body.subject, 'Your ENMAX bill is ready'); assert.match(body.text, /\$84\.12/); assert.deepEqual(body.auth, { spf: 'pass', dkim: 'pass', dkimDomain: 'outlook.com', dmarc: 'pass' });
   assert.equal(init.headers['X-Nudge-Signature'], await sign('s'.repeat(40), Number(init.headers['X-Nudge-Timestamp']), init.body));
@@ -78,7 +78,7 @@ test('the worker: not a bills address is dropped, over 10 MB refused, 404 droppe
   const realFetch = globalThis.fetch;
   try {
     let n = nudge([200]); globalThis.fetch = n.fetch;
-    await worker.email(message(raw(), { to: 'someone@in.anavamgroup.ca' }), env(kv())); assert.equal(n.calls.length, 0);
+    await worker.email(message(raw(), { to: 'someone@in.anavamgroup.com' }), env(kv())); assert.equal(n.calls.length, 0);
     const m = message(raw(), { rawSize: LIMITS.rejectOver + 1 }); await worker.email(m, env(kv())); assert.equal(m.rejected, 'Message too large');
     const store = kv(); n = nudge([404]); globalThis.fetch = n.fetch; await worker.email(message(raw()), env(store)); assert.equal(store.m.size, 0);
     n = nudge([503]); globalThis.fetch = n.fetch; await worker.email(message(raw()), env(store)); assert.equal(store.m.size, 1, 'kept for a retry');
