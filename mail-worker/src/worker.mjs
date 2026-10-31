@@ -1,4 +1,4 @@
-// The Cloudflare Email Worker for in.anavamgroup.ca: every bills-* message goes to Nudge as one signed HTTPS POST
+// The Cloudflare Email Worker for in.anavamgroup.com: every bills-* message goes to Nudge as one signed HTTPS POST
 // (docs/nudge-bills-spec.md). Settings: NUDGE_URL (a plain variable in wrangler.toml), NUDGE_MAIL_SECRET (a secret, set with
 // `wrangler secret put`, never in this repository) and the RETRY KV store (messages waiting for a retry, 24 hours at most).
 import PostalMime from 'postal-mime';
