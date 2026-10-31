@@ -8,7 +8,13 @@ Two gaps against the spec, agreed with the Nudge project before going live: Clou
 null; failing senders and viruses are refused at the door), and a 401 alert is an error line in the Worker's logs (turn on
 Cloudflare's email notification for Worker errors).
 
-## Deploying (once the domain is on Cloudflare)
+## Deploying with GitHub (the usual way)
+
+Once the three repository secrets are set (see `.github/workflows/deploy.yml`), run Actions > Deploy > Run workflow. It tests
+the worker, finds or creates the retry store, deploys, sets the shared secret, and publishes the website. Then turn on Email
+Routing for `in` with a catch-all to `anavam-mail-worker` (step 5 below).
+
+## Deploying by hand (once the domain is on Cloudflare)
 
 1. In this folder: `npm install`, then `npx wrangler login` (opens Cloudflare in the browser).
 2. `npx wrangler kv namespace create RETRY` and put the id it prints into `wrangler.toml`.
