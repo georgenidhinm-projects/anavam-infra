@@ -1,0 +1,59 @@
+# Deploys the bills mailbox Worker and the public website to Cloudflare. Started by hand (Actions > Deploy > Run workflow), or by
+# Claude. Needs three repository secrets, set once by Nidhin: CLOUDFLARE_API_TOKEN (a token from the "Edit Cloudflare Workers"
+# template, plus Cloudflare Pages: Edit), CLOUDFLARE_ACCOUNT_ID, and NUDGE_MAIL_SECRET (the same value as in Vercel, anavam-nudge).
+# Secrets are passed to Cloudflare directly and never printed.
+name: Deploy
+on:
+  workflow_dispatch:
+    inputs:
+      what:
+        description: "What to deploy: worker, site or both"
+        required: true
+        default: both
+        type: choice
+        options: [both, worker, site]
+concurrency: deploy
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Check the settings are there (names only)
+        run: |
+          missing=""
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || missing="$missing CLOUDFLARE_API_TOKEN"
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || missing="$missing CLOUDFLARE_ACCOUNT_ID"
+          if [ -n "$missing" ]; then echo "Missing repository secrets:$missing"; exit 1; fi
+      - name: Test the worker
+        if: inputs.what != 'site'
+        working-directory: mail-worker
+        run: npm ci && npm test
+      - name: The retry store (created once, found after that)
+        if: inputs.what != 'site'
+        working-directory: mail-worker
+        run: |
+          id=$(npx --yes wrangler@4 kv namespace list | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const a=JSON.parse(s.slice(s.indexOf("[")));const n=a.find(x=>x.title==="anavam-mail-worker-RETRY"||x.title==="RETRY");process.stdout.write(n?n.id:"")})')
+          if [ -z "$id" ]; then npx --yes wrangler@4 kv namespace create RETRY >/dev/null; id=$(npx --yes wrangler@4 kv namespace list | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const a=JSON.parse(s.slice(s.indexOf("[")));const n=a.find(x=>/RETRY$/.test(x.title));process.stdout.write(n?n.id:"")})'); fi
+          [ -n "$id" ] || { echo "Could not create or find the RETRY store"; exit 1; }
+          sed -i "s/REPLACE_WITH_THE_KV_NAMESPACE_ID/$id/" wrangler.toml
+          echo "Retry store ready."
+      - name: Deploy the worker and set its shared secret
+        if: inputs.what != 'site'
+        working-directory: mail-worker
+        env:
+          NUDGE_MAIL_SECRET: ${{ secrets.NUDGE_MAIL_SECRET }}
+        run: |
+          npx --yes wrangler@4 deploy
+          if [ -n "$NUDGE_MAIL_SECRET" ]; then printf '%s' "$NUDGE_MAIL_SECRET" | npx --yes wrangler@4 secret put NUDGE_MAIL_SECRET >/dev/null && echo "Shared secret set on the worker."; else echo "NUDGE_MAIL_SECRET is not set in this repository yet: the worker is deployed but can't sign until it is."; fi
+      - name: Deploy the website
+        if: inputs.what != 'worker'
+        run: |
+          npx --yes wrangler@4 pages project create anavam-site --production-branch main >/dev/null 2>&1 || true
+          npx --yes wrangler@4 pages deploy site --project-name anavam-site --branch main
