@@ -1,0 +1,9 @@
+# Short paths people might type. (www.anavamgroup.com and anavamgroup.ca are redirected by Cloudflare Redirect Rules,
+# because Pages can't redirect between domains here; see docs/website-go-live.md.)
+/home        /           301
+/index       /           301
+/about       /#about     301
+/contact     /#contact   301
+/privacy-policy  /privacy  301
+/terms-of-use    /terms    301
+/legal           /terms    301

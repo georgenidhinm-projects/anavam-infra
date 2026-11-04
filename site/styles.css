@@ -1,0 +1,88 @@
+/* Anavam Group: one stylesheet, no web fonts, no scripts. Light and dark follow the visitor's device. */
+:root {
+  color-scheme: light dark;
+  --ink: #1d2433;
+  --muted: #555e70;
+  --bg: #f7f6f2;
+  --panel: #efede6;
+  --rule: #d9d6cc;
+  --accent: #6b4e16;
+  --focus: #1a5fb4;
+  --measure: 36rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #ecebe6;
+    --muted: #b0b5bf;
+    --bg: #14171d;
+    --panel: #1c2028;
+    --rule: #2f3440;
+    --accent: #d9b56c;
+    --focus: #8ab4f8;
+  }
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 1.0625rem/1.65 Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.skip {
+  position: absolute; left: 16px; top: -3rem;
+  background: var(--ink); color: var(--bg);
+  padding: 0.5rem 0.75rem; border-radius: 4px; text-decoration: none;
+}
+.skip:focus { top: 0.75rem; }
+.wrap { width: 100%; max-width: var(--measure); margin: 0 auto; padding: 0 16px; }
+header.site { border-bottom: 1px solid var(--rule); }
+header.site .wrap {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+  gap: 0.5rem 1.5rem; padding-top: 1.25rem; padding-bottom: 1.25rem;
+}
+.brand {
+  color: var(--ink); text-decoration: none;
+  font-size: 1.15rem; letter-spacing: 0.08em; text-transform: uppercase;
+}
+nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 1.25rem; }
+nav a { color: var(--muted); text-decoration: none; font-size: 0.95rem; }
+nav a:hover, nav a[aria-current="page"] { color: var(--ink); text-decoration: underline; text-underline-offset: 0.2em; }
+main { flex: 1; padding: 3rem 0 4rem; }
+h1, h2 { font-weight: normal; line-height: 1.25; }
+h1 { font-size: clamp(2rem, 7vw, 2.75rem); letter-spacing: 0.01em; margin: 0 0 1rem; }
+h2 { font-size: 1.35rem; margin: 2.75rem 0 0.75rem; }
+p, ul.plain { margin: 0 0 1rem; }
+.lede { font-size: 1.2rem; color: var(--muted); }
+.mark { display: block; width: 3rem; height: 3rem; margin: 0 0 1.75rem; color: var(--accent); }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 2.5rem 0; }
+a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+a:hover { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 2px; }
+.contact {
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 6px;
+  padding: 1.25rem 1.25rem 0.25rem;
+}
+.contact a { font-size: 1.15rem; overflow-wrap: anywhere; }
+.small, footer.site { font-size: 0.9rem; color: var(--muted); }
+footer.site { border-top: 1px solid var(--rule); }
+footer.site .wrap {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1.5rem;
+  padding-top: 1.25rem; padding-bottom: 1.5rem;
+}
+footer.site ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 1.25rem; }
+footer.site a { color: var(--muted); }
+footer.site p { margin: 0; }
+@media (min-width: 40rem) {
+  main { padding: 5rem 0 5rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  a { transition: color 0.15s ease; }
+}
+@media print {
+  header.site nav, .skip { display: none; }
+  body { background: #fff; color: #000; }
+}
